@@ -115,34 +115,13 @@ else:
 
     ollama_available, ollama_models = check_ollama()
 
-# Se estiver no Streamlit Cloud, usar Google Gemini
+# Se estiver no Streamlit Cloud, não verificar Ollama
 if IS_STREAMLIT_CLOUD:
-    if not GOOGLE_API_KEY:
-        st.error("⚠️ **API Key não configurada!**")
-        st.markdown("""
-        Para usar no Streamlit Cloud, configure a variável de ambiente `GOOGLE_API_KEY`:
-        
-        1. No Streamlit Cloud, vá em **Settings** → **Secrets**
-        2. Adicione:
-        ```
-        GOOGLE_API_KEY = "sua_chave_aqui"
-        ```
-        3. Obtenha uma chave gratuita em: https://aistudio.google.com/app/apikey
-        4. Clique em **Save** e aguarde alguns segundos
-        5. Recarregue esta página
-        
-        **Limites Gratuitos:**
-        - 15 requisições/minuto
-        - 1.500 requisições/dia
-        - Totalmente gratuito!
-        
-        Consulte `COMO_OBTER_API_KEY_GRATUITA.md` para mais detalhes.
-        """)
-        st.stop()
-    # No Streamlit Cloud, não precisa verificar Ollama
     ollama_available = False
     ollama_models = None
-elif not ollama_available:
+
+# Se localmente e Ollama não estiver disponível, mostrar mensagem
+if not USE_GEMINI and not ollama_available:
     # Localmente, se Ollama não estiver disponível
     st.error("⚠️ **Ollama não está rodando!**")
     st.markdown("""
