@@ -17,13 +17,19 @@ IS_STREAMLIT_CLOUD = (
 )
 
 # Importações do LangChain
-if IS_STREAMLIT_CLOUD:
-    # Usar Google Gemini na nuvem
+# Sempre importar ambos para evitar erros de importação
+try:
     from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
-else:
-    # Usar Ollama localmente
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
+
+try:
     from langchain_community.chat_models import ChatOllama
     from langchain_community.embeddings import HuggingFaceEmbeddings
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
 
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -49,14 +55,11 @@ st.markdown("---")
 
 # Verificar ambiente e configurar modelo
 # Se tiver GOOGLE_API_KEY configurado, usar Gemini (funciona na nuvem)
-if GOOGLE_API_KEY and GOOGLE_API_KEY != "sua_chave_api_aqui":
+USE_GEMINI = (GOOGLE_API_KEY and GOOGLE_API_KEY != "sua_chave_api_aqui" and GEMINI_AVAILABLE) or IS_STREAMLIT_CLOUD
+
+if USE_GEMINI:
     # Usar Google Gemini (funciona localmente e na nuvem)
-    IS_STREAMLIT_CLOUD = True  # Forçar uso do Gemini
-    ollama_available = False
-    ollama_models = None
-elif IS_STREAMLIT_CLOUD:
-    # Streamlit Cloud - usar Google Gemini
-    if not GOOGLE_API_KEY:
+    if not GOOGLE_API_KEY or GOOGLE_API_KEY == "sua_chave_api_aqui":
         st.error("⚠️ **API Key não configurada!**")
         st.markdown("""
         Para usar no Streamlit Cloud, configure a variável de ambiente `GOOGLE_API_KEY`:
@@ -182,8 +185,11 @@ if ollama_models and 'models' in ollama_models and len(ollama_models['models']) 
 @st.cache_resource
 def get_llm_models():
     """Carrega os modelos LLM com cache"""
-    if IS_STREAMLIT_CLOUD:
-        # Streamlit Cloud - usar Google Gemini
+    if USE_GEMINI:
+        # Usar Google Gemini
+        if not GEMINI_AVAILABLE:
+            raise ImportError("langchain-google-genai não está instalado. Adicione ao requirements.txt")
+        
         llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-flash",
             temperature=1.0,
@@ -198,6 +204,9 @@ def get_llm_models():
         return llm, llm_triagem, "gemini-1.5-flash"
     else:
         # Local - usar Ollama
+        if not OLLAMA_AVAILABLE:
+            raise ImportError("langchain-community não está instalado corretamente")
+        
         model_name = "llama3.2"
         if ollama_models and 'models' in ollama_models:
             available_models = [m.get('name', '').split(':')[0] for m in ollama_models['models']]
@@ -224,8 +233,8 @@ def get_llm_models():
         return llm, llm_triagem, model_name
 
 llm, llm_triagem, model_name = get_llm_models()
-if IS_STREAMLIT_CLOUD:
-    st.sidebar.success(f"🤖 **Modelo:** {model_name}\n\n☁️ Rodando na nuvem\n✅ Usando Google Gemini")
+if USE_GEMINI:
+    st.sidebar.success(f"🤖 **Modelo:** {model_name}\n\n☁️ Usando Google Gemini\n✅ Gratuito (15 req/min)")
 else:
     st.sidebar.success(f"🤖 **Modelo:** {model_name}\n\n✅ 100% Gratuito\n✅ Sem limites de tokens\n✅ Funciona offline")
 
@@ -367,9 +376,11 @@ def load_vectorstore():
         st.success(f"✓ {len(chunks)} chunks criados")
         
         # Configurar embeddings
-        if IS_STREAMLIT_CLOUD:
-            # Streamlit Cloud - usar Google Gemini
+        if USE_GEMINI:
+            # Usar Google Gemini embeddings
             st.info("Configurando embeddings...")
+            if not GEMINI_AVAILABLE:
+                raise ImportError("langchain-google-genai não está instalado")
             embeddings = GoogleGenerativeAIEmbeddings(
                 model="models/text-embedding-004",
                 google_api_key=GOOGLE_API_KEY
