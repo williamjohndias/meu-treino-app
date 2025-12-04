@@ -208,10 +208,40 @@ def get_llm_models():
         if not GEMINI_AVAILABLE:
             raise ImportError("langchain-google-genai não está instalado. Adicione ao requirements.txt")
         
-        # Usar gemini-2.5-flash conforme especificado pelo usuário
-        model_name = "gemini-2.5-flash"
+        # Tentar modelos em ordem de preferência (começar com o mais recente)
+        model_options = [
+            "gemini-2.0-flash-exp",  # Modelo experimental mais recente
+            "gemini-2.5-flash",      # Modelo especificado pelo usuário
+            "gemini-1.5-pro",        # Modelo estável alternativo
+            "gemini-pro",            # Modelo mais estável e amplamente suportado
+        ]
         
-        # Criar instâncias do modelo
+        # Tentar cada modelo até encontrar um que funcione
+        model_name = None
+        llm = None
+        llm_triagem = None
+        
+        for model_option in model_options:
+            try:
+                # Testar se o modelo funciona criando uma instância
+                test_llm = ChatGoogleGenerativeAI(
+                    model=model_option,
+                    temperature=0.0,
+                    google_api_key=GOOGLE_API_KEY
+                )
+                # Se chegou aqui, o modelo funciona
+                model_name = model_option
+                break
+            except Exception as e:
+                # Se falhar, tentar próximo modelo
+                continue
+        
+        # Se nenhum modelo funcionou, usar gemini-pro como fallback final
+        if model_name is None:
+            model_name = "gemini-pro"
+            st.warning(f"⚠️ Usando modelo fallback: {model_name}")
+        
+        # Criar instâncias do modelo escolhido
         llm = ChatGoogleGenerativeAI(
             model=model_name,
             temperature=1.0,
@@ -223,6 +253,10 @@ def get_llm_models():
             temperature=0.0,
             google_api_key=GOOGLE_API_KEY
         )
+        
+        if model_name != "gemini-pro":
+            st.info(f"✅ Usando modelo: {model_name}")
+        
         return llm, llm_triagem, model_name
     else:
         # Local - usar Ollama
