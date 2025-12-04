@@ -200,7 +200,8 @@ if ollama_models and 'models' in ollama_models and len(ollama_models['models']) 
     st.stop()
 
 # Preparar o modelo LLM
-@st.cache_resource
+# Usar allow_output_mutation=True para forçar atualização do cache
+@st.cache_resource(allow_output_mutation=True)
 def get_llm_models():
     """Carrega os modelos LLM com cache"""
     if USE_GEMINI:
@@ -208,9 +209,8 @@ def get_llm_models():
         if not GEMINI_AVAILABLE:
             raise ImportError("langchain-google-genai não está instalado. Adicione ao requirements.txt")
         
-        # Usar gemini-pro que é o modelo mais estável e amplamente suportado
-        # Este modelo funciona com a API v1beta e é compatível com todas as contas
-        model_name = "gemini-pro"
+        # Usar gemini-2.5-flash conforme solicitado pelo usuário
+        model_name = "gemini-2.5-flash"
         
         # Criar instâncias do modelo
         llm = ChatGoogleGenerativeAI(
