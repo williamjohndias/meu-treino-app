@@ -48,19 +48,32 @@ st.title("📚 Consulta às Leis Orgânicas de Curitiba - PR")
 st.markdown("---")
 
 # Verificar ambiente e configurar modelo
-if IS_STREAMLIT_CLOUD:
+# Se tiver GOOGLE_API_KEY configurado, usar Gemini (funciona na nuvem)
+if GOOGLE_API_KEY and GOOGLE_API_KEY != "sua_chave_api_aqui":
+    # Usar Google Gemini (funciona localmente e na nuvem)
+    IS_STREAMLIT_CLOUD = True  # Forçar uso do Gemini
+    ollama_available = False
+    ollama_models = None
+elif IS_STREAMLIT_CLOUD:
     # Streamlit Cloud - usar Google Gemini
     if not GOOGLE_API_KEY:
         st.error("⚠️ **API Key não configurada!**")
         st.markdown("""
         Para usar no Streamlit Cloud, configure a variável de ambiente `GOOGLE_API_KEY`:
         
-        1. No Streamlit Cloud, vá em "Settings" → "Secrets"
+        1. No Streamlit Cloud, vá em **Settings** → **Secrets**
         2. Adicione:
         ```
-        GOOGLE_API_KEY=sua_chave_aqui
+        GOOGLE_API_KEY = "sua_chave_aqui"
         ```
         3. Obtenha uma chave gratuita em: https://aistudio.google.com/app/apikey
+        4. Clique em **Save** e aguarde alguns segundos
+        5. Recarregue esta página
+        
+        **Limites Gratuitos:**
+        - 15 requisições/minuto
+        - 1.500 requisições/dia
+        - Totalmente gratuito!
         
         Consulte `COMO_OBTER_API_KEY_GRATUITA.md` para mais detalhes.
         """)
