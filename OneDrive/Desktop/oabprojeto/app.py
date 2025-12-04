@@ -287,7 +287,7 @@ TRIAGEM_PROMPT = (
 class TriagemOut(BaseModel):
     decisao: Literal["AUTO_RESOLVER", "PEDIR_INFO", "ABRIR_CHAMADO"]
     urgencia: Literal["BAIXA", "MEDIA", "ALTA"]
-    campos_faltantes: List[str] = Field(default_factory=list)
+  campos_faltantes: List[str] = Field(default_factory=list)
 
 # Configurar chain de triagem - Ollama não suporta with_structured_output
 # Vamos usar prompt estruturado e parsing manual
@@ -385,7 +385,7 @@ def load_vectorstore():
     """Carrega o PDF e cria o índice vetorial com cache"""
     with st.spinner("Carregando PDF e criando índice... Isso pode levar alguns minutos na primeira vez."):
         # Carregar PDFs
-        docs = []
+docs = []
 
         # Tentar múltiplos caminhos possíveis
         possible_paths = [
@@ -442,7 +442,7 @@ def load_vectorstore():
         # Dividir em chunks
         st.info("Dividindo documentos em chunks...")
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        chunks = splitter.split_documents(docs)
+chunks = splitter.split_documents(docs)
         st.success(f"✓ {len(chunks)} chunks criados")
         
         # Configurar embeddings
@@ -451,7 +451,7 @@ def load_vectorstore():
             st.info("Configurando embeddings...")
             if not GEMINI_AVAILABLE:
                 raise ImportError("langchain-google-genai não está instalado")
-            embeddings = GoogleGenerativeAIEmbeddings(
+embeddings = GoogleGenerativeAIEmbeddings(
                 model="models/text-embedding-004",
                 google_api_key=GOOGLE_API_KEY
             )
@@ -543,7 +543,7 @@ document_chain = create_rag_chain(llm_triagem, prompt_rag)
 def perguntar_vade_mecum(pergunta: str) -> Dict:
     """Função principal para consultar o Vade Mecum"""
     try:
-        docs_relacionados = retriever.invoke(pergunta)
+  docs_relacionados = retriever.invoke(pergunta)
     except Exception as e:
         return {
             "answer": f"Erro ao buscar informações: {str(e)}",
