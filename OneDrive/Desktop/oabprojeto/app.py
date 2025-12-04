@@ -658,12 +658,43 @@ def decidir_pos_triagem(state: AgentState) -> str:
 def decidir_pos_auto_resolver(state: AgentState) -> str:
     if state["rag_sucesso"]:
         return "end"
+    
+    state_da_pergunta = (state["mensagem"] or "").lower()
+    if any(k in state_da_pergunta for k in KEYWORDS_ABRIR_TICKET):
+        return "abrir_chamado"
     return "pedir_info"
 
-    state_da_pergunta = (state["mensagem"] or "").lower()
-    if any(k in state_da_pergunta for k in KEYWORDS_ABRIR_TICKET): return "abrir_chamado" 
-    else: return "pedir_info"
+# Criar workflow
+@st.cache_resource
+def get_workflow():
+    """Cria o workflow com cache"""
+    workflow = StateGraph(AgentState)
 
+    workflow.add_node("triagem", node_triagem)
+    workflow.add_node("auto_resolver", node_auto_resolver)
+    workflow.add_node("pedir_info", node_pedir_info)
+    workflow.add_node("abrir_chamado", node_abrir_chamado)
+
+    workflow.add_edge(START, "triagem")
+    workflow.add_conditional_edges("triagem", decidir_pos_triagem, {
+        "auto_resolver": "auto_resolver",
+        "pedir_info": "pedir_info",
+        "abrir_chamado": "abrir_chamado"
+    })
+
+    workflow.add_conditional_edges("auto_resolver", decidir_pos_auto_resolver, {
+        "pedir_info": "pedir_info",
+        "abrir_chamado": "abrir_chamado",
+        "end": END
+    })
+    
+    workflow.add_edge("pedir_info", END)
+    workflow.add_edge("abrir_chamado", END)
+
+    return workflow.compile()
+
+# Criar o grafo
+grafo = get_workflow()
 
 # Input do usuário
 pergunta = st.text_input(
