@@ -8,9 +8,18 @@ import requests
 # Carregar variáveis de ambiente
 load_dotenv()
 
+# Detectar se está rodando no Streamlit Cloud
+IS_STREAMLIT_CLOUD = os.getenv("STREAMLIT_SHARING") is not None or os.getenv("STREAMLIT_SERVER_PORT") is not None
+
 # Importações do LangChain
-from langchain_community.chat_models import ChatOllama
-from langchain_community.embeddings import HuggingFaceEmbeddings
+if IS_STREAMLIT_CLOUD:
+    # Usar Google Gemini na nuvem
+    from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+else:
+    # Usar Ollama localmente
+    from langchain_community.chat_models import ChatOllama
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+
 from langchain_community.document_loaders import PyMuPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -19,6 +28,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel, Field
 from typing import Literal
+
+# Configuração da API Key (para Streamlit Cloud)
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Interface Streamlit
 st.set_page_config(
@@ -30,21 +42,42 @@ st.set_page_config(
 st.title("📚 Consulta às Leis Orgânicas de Curitiba - PR")
 st.markdown("---")
 
-# Verificar se Ollama está instalado e rodando
-@st.cache_resource
-def check_ollama():
-    """Verifica se Ollama está disponível"""
-    try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=2)
-        if response.status_code == 200:
-            return True, response.json()
-        return False, None
-    except:
-        return False, None
+# Verificar ambiente e configurar modelo
+if IS_STREAMLIT_CLOUD:
+    # Streamlit Cloud - usar Google Gemini
+    if not GOOGLE_API_KEY:
+        st.error("⚠️ **API Key não configurada!**")
+        st.markdown("""
+        Para usar no Streamlit Cloud, configure a variável de ambiente `GOOGLE_API_KEY`:
+        
+        1. No Streamlit Cloud, vá em "Settings" → "Secrets"
+        2. Adicione:
+        ```
+        GOOGLE_API_KEY=sua_chave_aqui
+        ```
+        3. Obtenha uma chave gratuita em: https://aistudio.google.com/app/apikey
+        
+        Consulte `COMO_OBTER_API_KEY_GRATUITA.md` para mais detalhes.
+        """)
+        st.stop()
+    ollama_available = False
+    ollama_models = None
+else:
+    # Local - verificar Ollama
+    @st.cache_resource
+    def check_ollama():
+        """Verifica se Ollama está disponível"""
+        try:
+            response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            if response.status_code == 200:
+                return True, response.json()
+            return False, None
+        except:
+            return False, None
 
-ollama_available, ollama_models = check_ollama()
+    ollama_available, ollama_models = check_ollama()
 
-if not ollama_available:
+if not IS_STREAMLIT_CLOUD and not ollama_available:
     st.error("⚠️ **Ollama não está rodando!**")
     st.markdown("""
     **Ollama é 100% GRATUITO e SEM LIMITES DE TOKENS!**
@@ -103,35 +136,52 @@ if ollama_models and 'models' in ollama_models and len(ollama_models['models']) 
 @st.cache_resource
 def get_llm_models():
     """Carrega os modelos LLM com cache"""
-    # Ollama - 100% Gratuito e Sem Limites!
-    # Tenta usar llama3.2, se não estiver disponível usa o primeiro modelo disponível
-    model_name = "llama3.2"
-    if ollama_models and 'models' in ollama_models:
-        available_models = [m.get('name', '').split(':')[0] for m in ollama_models['models']]
-        if 'llama3.2' in available_models:
-            model_name = "llama3.2"
-        elif 'mistral' in available_models:
-            model_name = "mistral"
-        elif 'phi3' in available_models:
-            model_name = "phi3"
-        elif len(available_models) > 0:
-            model_name = available_models[0]
-    
-    llm = ChatOllama(
-        model=model_name,
-        temperature=1.0,
-        base_url="http://localhost:11434"
-    )
-    
-    llm_triagem = ChatOllama(
-        model=model_name,
-        temperature=0.0,
-        base_url="http://localhost:11434"
-    )
-    return llm, llm_triagem, model_name
+    if IS_STREAMLIT_CLOUD:
+        # Streamlit Cloud - usar Google Gemini
+        llm = ChatGoogleGenerativeAI(
+            model="gemini-1.5-flash",
+            temperature=1.0,
+            google_api_key=GOOGLE_API_KEY
+        )
+        
+        llm_triagem = ChatGoogleGenerativeAI(
+            model="gemini-1.5-flash",
+            temperature=0.0,
+            google_api_key=GOOGLE_API_KEY
+        )
+        return llm, llm_triagem, "gemini-1.5-flash"
+    else:
+        # Local - usar Ollama
+        model_name = "llama3.2"
+        if ollama_models and 'models' in ollama_models:
+            available_models = [m.get('name', '').split(':')[0] for m in ollama_models['models']]
+            if 'llama3.2' in available_models:
+                model_name = "llama3.2"
+            elif 'mistral' in available_models:
+                model_name = "mistral"
+            elif 'phi3' in available_models:
+                model_name = "phi3"
+            elif len(available_models) > 0:
+                model_name = available_models[0]
+        
+        llm = ChatOllama(
+            model=model_name,
+            temperature=1.0,
+            base_url="http://localhost:11434"
+        )
+        
+        llm_triagem = ChatOllama(
+            model=model_name,
+            temperature=0.0,
+            base_url="http://localhost:11434"
+        )
+        return llm, llm_triagem, model_name
 
 llm, llm_triagem, model_name = get_llm_models()
-st.sidebar.success(f"🤖 **Modelo:** {model_name}\n\n✅ 100% Gratuito\n✅ Sem limites de tokens\n✅ Funciona offline")
+if IS_STREAMLIT_CLOUD:
+    st.sidebar.success(f"🤖 **Modelo:** {model_name}\n\n☁️ Rodando na nuvem\n✅ Usando Google Gemini")
+else:
+    st.sidebar.success(f"🤖 **Modelo:** {model_name}\n\n✅ 100% Gratuito\n✅ Sem limites de tokens\n✅ Funciona offline")
 
 # Prompt de triagem
 TRIAGEM_PROMPT = (
@@ -270,16 +320,25 @@ def load_vectorstore():
         chunks = splitter.split_documents(docs)
         st.success(f"✓ {len(chunks)} chunks criados")
         
-        # Configurar embeddings - usando HuggingFace gratuito (sem limites!)
-        st.info("Baixando modelo de embeddings (apenas na primeira vez)...")
-        from langchain_community.embeddings import HuggingFaceEmbeddings
-        # Modelo leve e rápido, totalmente gratuito
-        embeddings = HuggingFaceEmbeddings(
-            model_name="sentence-transformers/all-MiniLM-L6-v2",
-            model_kwargs={'device': 'cpu'},
-            encode_kwargs={'normalize_embeddings': True}
-        )
-        st.success("✓ Embeddings configurados (gratuito e sem limites!)")
+        # Configurar embeddings
+        if IS_STREAMLIT_CLOUD:
+            # Streamlit Cloud - usar Google Gemini
+            st.info("Configurando embeddings...")
+            embeddings = GoogleGenerativeAIEmbeddings(
+                model="models/text-embedding-004",
+                google_api_key=GOOGLE_API_KEY
+            )
+            st.success("✓ Embeddings configurados")
+        else:
+            # Local - usar HuggingFace
+            st.info("Baixando modelo de embeddings (apenas na primeira vez)...")
+            from langchain_community.embeddings import HuggingFaceEmbeddings
+            embeddings = HuggingFaceEmbeddings(
+                model_name="sentence-transformers/all-MiniLM-L6-v2",
+                model_kwargs={'device': 'cpu'},
+                encode_kwargs={'normalize_embeddings': True}
+            )
+            st.success("✓ Embeddings configurados (gratuito e sem limites!)")
         
         # Criar vector store
         progress_bar = st.progress(0)
