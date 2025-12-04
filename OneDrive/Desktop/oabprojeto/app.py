@@ -442,7 +442,7 @@ def load_vectorstore():
         # Dividir em chunks
         st.info("Dividindo documentos em chunks...")
         splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-chunks = splitter.split_documents(docs)
+        chunks = splitter.split_documents(docs)
         st.success(f"✓ {len(chunks)} chunks criados")
         
         # Configurar embeddings
@@ -451,7 +451,7 @@ chunks = splitter.split_documents(docs)
             st.info("Configurando embeddings...")
             if not GEMINI_AVAILABLE:
                 raise ImportError("langchain-google-genai não está instalado")
-embeddings = GoogleGenerativeAIEmbeddings(
+            embeddings = GoogleGenerativeAIEmbeddings(
                 model="models/text-embedding-004",
                 google_api_key=GOOGLE_API_KEY
             )
