@@ -208,18 +208,28 @@ def get_llm_models():
         if not GEMINI_AVAILABLE:
             raise ImportError("langchain-google-genai não está instalado. Adicione ao requirements.txt")
         
+        # Tentar modelos em ordem de preferência
+        model_options = [
+            "gemini-pro",  # Modelo mais estável e amplamente suportado
+            "gemini-1.5-pro",
+            "gemini-1.5-flash-latest",
+        ]
+        
+        model_name = model_options[0]  # Começar com gemini-pro
+        
+        # Criar instâncias do modelo
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model=model_name,
             temperature=1.0,
             google_api_key=GOOGLE_API_KEY
         )
         
         llm_triagem = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model=model_name,
             temperature=0.0,
             google_api_key=GOOGLE_API_KEY
         )
-        return llm, llm_triagem, "gemini-1.5-flash"
+        return llm, llm_triagem, model_name
     else:
         # Local - usar Ollama
         if not OLLAMA_AVAILABLE:
