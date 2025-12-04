@@ -213,9 +213,15 @@ def get_llm_models(_cache_version="v3"):
         if not GEMINI_AVAILABLE:
             raise ImportError("langchain-google-genai não está instalado. Adicione ao requirements.txt")
         
-        # Usar gemini-pro que é garantido funcionar com API v1beta
-        # Modelos como gemini-2.5-flash podem não estar disponíveis
-        model_name = "gemini-pro"
+        # Tentar modelos compatíveis com API v1beta em ordem de preferência
+        model_options = [
+            "gemini-1.5-pro",      # Modelo estável e amplamente disponível
+            "gemini-1.5-flash",    # Modelo mais rápido
+            "gemini-1.5-pro-latest", # Versão mais recente
+        ]
+        
+        # Usar o primeiro modelo da lista (gemini-1.5-pro)
+        model_name = model_options[0]
         
         # Criar instâncias do modelo
         llm = ChatGoogleGenerativeAI(
