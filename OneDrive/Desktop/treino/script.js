@@ -13,6 +13,71 @@ document.addEventListener('DOMContentLoaded', () => {
     // Carregar dados
     renderExercises();
     updateExerciseSelect();
+    
+    // Destacar treino do dia atual
+    highlightTodayWorkout();
+});
+
+// Destacar o treino do dia atual
+function highlightTodayWorkout() {
+    const today = new Date().toLocaleLowerCase();
+    const daysOfWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+    const dayIndex = new Date().getDay();
+    const todayName = daysOfWeek[dayIndex];
+    
+    // Remover destaque de todos os dias
+    document.querySelectorAll('.routine-day').forEach(day => {
+        day.classList.remove('today');
+    });
+    
+    // Adicionar destaque ao dia atual
+    const todayCard = document.querySelector(`.routine-day[data-day="${todayName}"]`);
+    if (todayCard) {
+        todayCard.classList.add('today');
+        todayCard.style.border = '3px solid #fbbf24';
+        todayCard.style.boxShadow = '0 0 20px rgba(251, 191, 36, 0.5)';
+    }
+}
+
+// Visualizar PDF no modal
+function viewRoutine(pdfFile, title) {
+    const modal = document.getElementById('pdf-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const pdfViewer = document.getElementById('pdf-viewer');
+    const pdfDownload = document.getElementById('pdf-download');
+    
+    modalTitle.textContent = title;
+    pdfViewer.src = pdfFile;
+    pdfDownload.href = pdfFile;
+    pdfDownload.download = pdfFile;
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Fechar modal
+function closePdfModal() {
+    const modal = document.getElementById('pdf-modal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    
+    // Limpar iframe
+    document.getElementById('pdf-viewer').src = '';
+}
+
+// Fechar modal ao clicar fora dele
+window.addEventListener('click', (e) => {
+    const modal = document.getElementById('pdf-modal');
+    if (e.target === modal) {
+        closePdfModal();
+    }
+});
+
+// Fechar modal com tecla ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closePdfModal();
+    }
 });
 
 // Adicionar novo treino

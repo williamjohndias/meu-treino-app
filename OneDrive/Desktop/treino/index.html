@@ -15,6 +15,67 @@
         </header>
 
         <main>
+            <!-- Seção de Rotina Semanal -->
+            <section class="card routine-section">
+                <h2>📅 Minha Rotina de Treino Semanal</h2>
+                <p class="routine-subtitle">Clique em um dia para visualizar o treino completo</p>
+                <div class="routine-grid">
+                    <div class="routine-day" data-day="segunda">
+                        <div class="routine-icon">🔥</div>
+                        <div class="routine-day-name">Segunda</div>
+                        <div class="routine-focus">Deltoides</div>
+                        <button class="btn-view-routine" onclick="viewRoutine('segunda deltoides.pdf', 'Segunda - Deltoides')">
+                            Ver Treino
+                        </button>
+                    </div>
+                    
+                    <div class="routine-day" data-day="terca">
+                        <div class="routine-icon">💪</div>
+                        <div class="routine-day-name">Terça</div>
+                        <div class="routine-focus">Bíceps e Tríceps</div>
+                        <button class="btn-view-routine" onclick="viewRoutine('terça biceps e triceps.pdf', 'Terça - Bíceps e Tríceps')">
+                            Ver Treino
+                        </button>
+                    </div>
+                    
+                    <div class="routine-day" data-day="quarta">
+                        <div class="routine-icon">🍑</div>
+                        <div class="routine-day-name">Quarta</div>
+                        <div class="routine-focus">Posterior e Glúteo</div>
+                        <button class="btn-view-routine" onclick="viewRoutine('quarta posterior e glueto.pdf', 'Quarta - Posterior e Glúteo')">
+                            Ver Treino
+                        </button>
+                    </div>
+                    
+                    <div class="routine-day" data-day="quinta">
+                        <div class="routine-icon">💯</div>
+                        <div class="routine-day-name">Quinta</div>
+                        <div class="routine-focus">Peito e Tríceps</div>
+                        <button class="btn-view-routine" onclick="viewRoutine('quinta peito e tríceps.pdf', 'Quinta - Peito e Tríceps')">
+                            Ver Treino
+                        </button>
+                    </div>
+                    
+                    <div class="routine-day" data-day="sexta">
+                        <div class="routine-icon">💪</div>
+                        <div class="routine-day-name">Sexta</div>
+                        <div class="routine-focus">Dorsal</div>
+                        <button class="btn-view-routine" onclick="viewRoutine('sexta dorsal.pdf', 'Sexta - Dorsal')">
+                            Ver Treino
+                        </button>
+                    </div>
+                    
+                    <div class="routine-day" data-day="sabado">
+                        <div class="routine-icon">🦵</div>
+                        <div class="routine-day-name">Sábado</div>
+                        <div class="routine-focus">Quadríceps</div>
+                        <button class="btn-view-routine" onclick="viewRoutine('sábado quadriceps.pdf', 'Sábado - Quadríceps')">
+                            Ver Treino
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Seção de Adicionar Treino -->
             <section class="card add-workout-section">
                 <h2>Adicionar Exercício</h2>
@@ -78,6 +139,22 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Modal para visualizar PDF -->
+    <div id="pdf-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Treino</h3>
+                <button class="modal-close" onclick="closePdfModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <iframe id="pdf-viewer" src="" frameborder="0"></iframe>
+            </div>
+            <div class="modal-footer">
+                <a id="pdf-download" href="" download class="btn-download">📥 Baixar PDF</a>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
