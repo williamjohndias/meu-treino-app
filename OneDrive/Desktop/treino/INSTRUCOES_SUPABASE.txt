@@ -1,0 +1,57 @@
+╔═══════════════════════════════════════════════════════════════╗
+║           CONFIGURAR SUPABASE - 3 PASSOS SIMPLES             ║
+╚═══════════════════════════════════════════════════════════════╝
+
+PASSO 1: COPIAR O SQL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No Notepad que abriu (arquivo: criar-tabela.sql):
+
+  1. Pressione Ctrl + A (selecionar tudo)
+  2. Pressione Ctrl + C (copiar)
+
+
+PASSO 2: COLAR NO SUPABASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+No navegador que abriu (Supabase SQL Editor):
+
+  1. Se necessário, faça login no Supabase
+  2. Clique no botão "New query" (botão azul no topo)
+  3. Delete qualquer código que estiver lá
+  4. Pressione Ctrl + V (colar o SQL)
+  5. Clique no botão "Run" ou pressione Ctrl + Enter
+  6. Aguarde a mensagem "Success" ✅
+
+
+PASSO 3: VERIFICAR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. No menu lateral do Supabase, clique em "Table Editor"
+  2. Você deve ver a tabela "workouts" criada
+  3. Pronto! O banco está configurado ✅
+
+
+DEPOIS DE CONFIGURAR:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  • Abra o arquivo index.html no navegador
+  • Adicione um treino de teste
+  • Volte ao Supabase Table Editor e atualize (F5)
+  • Você verá o treino salvo na nuvem! 🎉
+
+
+PROBLEMAS?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Se der erro no SQL:
+  - Verifique se copiou TODO o conteúdo do arquivo criar-tabela.sql
+  - Certifique-se de não ter copiado o arquivo .ps1 por engano
+
+Se o treino não salvar:
+  - Abra o Console do navegador (F12)
+  - Procure por erros em vermelho
+  - Me avise qual erro apareceu
+
+╚═══════════════════════════════════════════════════════════════╝
+

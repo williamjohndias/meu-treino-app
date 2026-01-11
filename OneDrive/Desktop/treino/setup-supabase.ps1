@@ -107,6 +107,6 @@ Write-Host "   • Seus treinos serão salvos automaticamente na nuvem" -Foregro
 Write-Host "   • Acesse de qualquer dispositivo" -ForegroundColor White
 Write-Host "   • Dados sincronizados em tempo real" -ForegroundColor White
 Write-Host ""
-Write-Host "📖 Mais informações: SUPABASE_SETUP.md" -ForegroundColor Gray
+Write-Host "Mais informacoes: SUPABASE_SETUP.md" -ForegroundColor Gray
 Write-Host ""
 
