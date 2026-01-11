@@ -1,8 +1,9 @@
 // Gerenciamento de dados
-let workouts = JSON.parse(localStorage.getItem('workouts')) || [];
+let workouts = [];
+let isOnline = true;
 
 // Inicialização
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Definir data padrão como hoje
     document.getElementById('workout-date').valueAsDate = new Date();
     
@@ -10,13 +11,143 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('workout-form').addEventListener('submit', handleAddWorkout);
     document.getElementById('exercise-select').addEventListener('change', handleExerciseSelect);
     
-    // Carregar dados
+    // Mostrar loading
+    showLoading(true);
+    
+    // Carregar dados do Supabase
+    await loadWorkoutsFromSupabase();
+    
+    // Carregar interface
     renderExercises();
     updateExerciseSelect();
     
     // Destacar treino do dia atual
     highlightTodayWorkout();
+    
+    // Esconder loading
+    showLoading(false);
 });
+
+// Carregar treinos do Supabase
+async function loadWorkoutsFromSupabase() {
+    try {
+        const { data, error } = await supabase
+            .from('workouts')
+            .select('*')
+            .order('workout_date', { ascending: false });
+        
+        if (error) throw error;
+        
+        // Converter formato do banco para formato local
+        workouts = data.map(workout => ({
+            id: workout.id,
+            exerciseName: workout.exercise_name,
+            sets: workout.sets,
+            reps: workout.reps,
+            weight: workout.weight,
+            date: workout.workout_date,
+            timestamp: new Date(workout.workout_date).getTime()
+        }));
+        
+        // Salvar backup no localStorage
+        localStorage.setItem('workouts', JSON.stringify(workouts));
+        
+        isOnline = true;
+        console.log('✅ Dados carregados do Supabase:', workouts.length, 'treinos');
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar do Supabase:', error);
+        
+        // Tentar carregar do localStorage como fallback
+        const localData = localStorage.getItem('workouts');
+        if (localData) {
+            workouts = JSON.parse(localData);
+            isOnline = false;
+            showNotification('⚠️ Modo offline - usando dados locais', 'warning');
+        }
+    }
+}
+
+// Salvar treino no Supabase
+async function saveWorkoutToSupabase(workout) {
+    try {
+        const { data, error } = await supabase
+            .from('workouts')
+            .insert([{
+                exercise_name: workout.exerciseName,
+                sets: workout.sets,
+                reps: workout.reps,
+                weight: workout.weight,
+                workout_date: workout.date
+            }])
+            .select();
+        
+        if (error) throw error;
+        
+        // Atualizar ID local com ID do banco
+        workout.id = data[0].id;
+        
+        console.log('✅ Treino salvo no Supabase:', data[0]);
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Erro ao salvar no Supabase:', error);
+        showNotification('⚠️ Erro ao salvar online - salvo localmente', 'warning');
+        return false;
+    }
+}
+
+// Deletar treino do Supabase
+async function deleteWorkoutFromSupabase(date, exerciseName) {
+    try {
+        const { error } = await supabase
+            .from('workouts')
+            .delete()
+            .eq('workout_date', date)
+            .eq('exercise_name', exerciseName);
+        
+        if (error) throw error;
+        
+        console.log('✅ Treino deletado do Supabase');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Erro ao deletar do Supabase:', error);
+        showNotification('⚠️ Erro ao deletar online', 'warning');
+        return false;
+    }
+}
+
+// Mostrar loading
+function showLoading(show) {
+    let loading = document.getElementById('loading-overlay');
+    
+    if (!loading) {
+        loading = document.createElement('div');
+        loading.id = 'loading-overlay';
+        loading.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        `;
+        loading.innerHTML = `
+            <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                <div style="font-size: 40px; margin-bottom: 15px;">⏳</div>
+                <div style="font-size: 18px; color: #6366f1; font-weight: 600;">Carregando seus treinos...</div>
+            </div>
+        `;
+        document.body.appendChild(loading);
+    }
+    
+    loading.style.display = show ? 'flex' : 'none';
+}
 
 // Destacar o treino do dia atual
 function highlightTodayWorkout() {
@@ -81,7 +212,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // Adicionar novo treino
-function handleAddWorkout(e) {
+async function handleAddWorkout(e) {
     e.preventDefault();
     
     const exerciseName = document.getElementById('exercise-name').value.trim();
@@ -100,24 +231,28 @@ function handleAddWorkout(e) {
         timestamp: new Date(date).getTime()
     };
     
-    workouts.push(workout);
-    workouts.sort((a, b) => b.timestamp - a.timestamp); // Mais recentes primeiro
+    // Salvar no Supabase
+    showLoading(true);
+    const saved = await saveWorkoutToSupabase(workout);
+    showLoading(false);
     
-    saveWorkouts();
-    renderExercises();
-    updateExerciseSelect();
-    
-    // Limpar formulário
-    document.getElementById('workout-form').reset();
-    document.getElementById('workout-date').valueAsDate = new Date();
-    
-    // Mostrar feedback
-    showNotification('Exercício adicionado com sucesso!');
-}
-
-// Salvar no localStorage
-function saveWorkouts() {
-    localStorage.setItem('workouts', JSON.stringify(workouts));
+    if (saved) {
+        workouts.push(workout);
+        workouts.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Backup local
+        localStorage.setItem('workouts', JSON.stringify(workouts));
+        
+        renderExercises();
+        updateExerciseSelect();
+        
+        // Limpar formulário
+        document.getElementById('workout-form').reset();
+        document.getElementById('workout-date').valueAsDate = new Date();
+        
+        // Mostrar feedback
+        showNotification('✅ Exercício adicionado com sucesso!', 'success');
+    }
 }
 
 // Renderizar lista de exercícios
@@ -181,20 +316,27 @@ function renderExercises() {
 }
 
 // Deletar treino
-function deleteWorkout(date, exerciseName) {
+async function deleteWorkout(date, exerciseName) {
     if (confirm('Tem certeza que deseja excluir este treino?')) {
-        workouts = workouts.filter(w => !(w.date === date && w.exerciseName === exerciseName));
-        saveWorkouts();
-        renderExercises();
-        updateExerciseSelect();
+        showLoading(true);
+        const deleted = await deleteWorkoutFromSupabase(date, exerciseName);
+        showLoading(false);
         
-        // Limpar gráficos se necessário
-        if (document.getElementById('exercise-select').value === exerciseName) {
-            document.getElementById('exercise-select').value = '';
-            handleExerciseSelect();
+        if (deleted) {
+            workouts = workouts.filter(w => !(w.date === date && w.exerciseName === exerciseName));
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            
+            renderExercises();
+            updateExerciseSelect();
+            
+            // Limpar gráficos se necessário
+            if (document.getElementById('exercise-select').value === exerciseName) {
+                document.getElementById('exercise-select').value = '';
+                handleExerciseSelect();
+            }
+            
+            showNotification('✅ Treino excluído!', 'success');
         }
-        
-        showNotification('Treino excluído!');
     }
 }
 
@@ -428,20 +570,29 @@ function formatDate(dateString) {
 }
 
 // Notificação
-function showNotification(message) {
+function showNotification(message, type = 'success') {
     // Criar elemento de notificação
     const notification = document.createElement('div');
+    
+    const colors = {
+        success: '#10b981',
+        warning: '#f59e0b',
+        error: '#ef4444',
+        info: '#3b82f6'
+    };
+    
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #10b981;
+        background: ${colors[type] || colors.success};
         color: white;
         padding: 16px 24px;
         border-radius: 8px;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        z-index: 1000;
+        z-index: 10000;
         animation: slideIn 0.3s ease;
+        max-width: 350px;
     `;
     notification.textContent = message;
     
@@ -450,7 +601,7 @@ function showNotification(message) {
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    }, 4000);
 }
 
 // Adicionar animações CSS
