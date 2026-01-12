@@ -948,41 +948,60 @@ function getPreviousWeight(exerciseName) {
 
 // Iniciar treino (mostra peso anterior)
 function startWorkout(day, dayName) {
-    // Scroll para o formulário
-    document.querySelector('.add-workout-section').scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-    });
-    
-    // Mostrar notificação com o treino do dia
-    showNotification(`💪 ${dayName} - Preencha seus exercícios abaixo`, 'info');
-    
-    // Definir data de hoje se for o dia atual
-    const daysOfWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
-    const todayIndex = new Date().getDay();
-    const todayName = daysOfWeek[todayIndex];
-    
-    if (day.toLowerCase() === todayName) {
-        document.getElementById('workout-date').valueAsDate = new Date();
-    }
-    
-    // Adicionar listener para mostrar peso anterior ao digitar exercício
-    const exerciseInput = document.getElementById('exercise-name');
-    const existingListener = exerciseInput.dataset.hasListener;
-    
-    if (!existingListener) {
-        exerciseInput.addEventListener('blur', function() {
-            const exerciseName = this.value.trim();
-            if (exerciseName) {
-                const previous = getPreviousWeight(exerciseName);
-                if (previous) {
-                    showPreviousWeightHint(exerciseName, previous);
-                } else {
-                    removePreviousWeightHint();
-                }
+    try {
+        // Primeiro, mostrar a seção de adicionar
+        showSection('adicionar');
+        
+        // Aguardar um pouco para a seção aparecer antes de fazer scroll
+        setTimeout(() => {
+            // Scroll para o formulário
+            const addSection = document.querySelector('.add-workout-section');
+            if (addSection) {
+                addSection.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
             }
-        });
-        exerciseInput.dataset.hasListener = 'true';
+        }, 100);
+        
+        // Mostrar notificação com o treino do dia
+        showNotification(`💪 ${dayName} - Preencha seus exercícios abaixo`, 'info');
+        
+        // Definir data de hoje se for o dia atual
+        const daysOfWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+        const todayIndex = new Date().getDay();
+        const todayName = daysOfWeek[todayIndex];
+        
+        if (day.toLowerCase() === todayName) {
+            const dateInput = document.getElementById('workout-date');
+            if (dateInput) {
+                dateInput.valueAsDate = new Date();
+            }
+        }
+        
+        // Adicionar listener para mostrar peso anterior ao digitar exercício
+        const exerciseInput = document.getElementById('exercise-name');
+        if (exerciseInput) {
+            const existingListener = exerciseInput.dataset.hasListener;
+            
+            if (!existingListener) {
+                exerciseInput.addEventListener('blur', function() {
+                    const exerciseName = this.value.trim();
+                    if (exerciseName) {
+                        const previous = getPreviousWeight(exerciseName);
+                        if (previous) {
+                            showPreviousWeightHint(exerciseName, previous);
+                        } else {
+                            removePreviousWeightHint();
+                        }
+                    }
+                });
+                exerciseInput.dataset.hasListener = 'true';
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao iniciar treino:', error);
+        showNotification('Erro ao iniciar treino. Tente novamente.', 'error');
     }
 }
 
