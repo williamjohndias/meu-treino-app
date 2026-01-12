@@ -266,9 +266,20 @@ async function saveWorkoutToSupabase(workout) {
     try {
         console.log('🔄 Tentando salvar no Supabase:', workout);
         
-        // Verificar se Supabase está configurado
+        // Verificar e tentar inicializar Supabase se necessário
         if (!supabase) {
-            throw new Error('Supabase não está configurado!');
+            const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
+            
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase inicializado durante salvamento');
+            } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase inicializado via window.supabase');
+            } else {
+                throw new Error('Supabase não está disponível! Verifique se o script foi carregado e recarregue a página.');
+            }
         }
         
         const { data, error } = await supabase
