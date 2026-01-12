@@ -1,20 +1,34 @@
+# Dependências
+node_modules/
+package-lock.json
+
 # Arquivos do sistema
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# Logs
+AppData/
+.cursor/
 *.log
-npm-debug.log*
+*.lock
 
 # Arquivos temporários
 *.tmp
 *.temp
+.DS_Store
+Thumbs.db
 
+# Arquivos de configuração local
+.env
+.env.local
+
+# Arquivos do Vercel
+.vercel/
+
+# Arquivos de documentação temporários
+*.txt
+!README.md
+
+# Arquivos SQL de setup (já executados)
+setup-*.sql
+*-setup.sql
+
+# Scripts PowerShell de setup
+setup-*.ps1
+deploy-*.ps1
