@@ -33,9 +33,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateExerciseSelect();
     updateDashboardExerciseSelect();
     
+    // Atualizar streak no header
+    updateHeaderStreak();
+    
     // Esconder loading
     showLoading(false);
 });
+
+// Navegação entre seções
+function showSection(sectionId) {
+    // Esconder todas as seções
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Mostrar seção selecionada
+    const section = document.getElementById(`section-${sectionId}`);
+    if (section) {
+        section.classList.add('active');
+    }
+    
+    // Atualizar links ativos
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    const activeLink = document.querySelector(`.nav-link[onclick="showSection('${sectionId}')"]`);
+    if (activeLink) {
+        activeLink.classList.add('active');
+    }
+    
+    // Atualizar título
+    const titles = {
+        'rotina': 'Minha Rotina',
+        'dashboard': 'Dashboard',
+        'adicionar': 'Adicionar Exercício',
+        'exercicios': 'Meus Exercícios',
+        'calendario': 'Calendário',
+        'evolucao': 'Evolução'
+    };
+    
+    const titleEl = document.getElementById('page-title');
+    if (titleEl && titles[sectionId]) {
+        titleEl.textContent = titles[sectionId];
+    }
+    
+    // Scroll para o topo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Atualizar streak no header
+function updateHeaderStreak() {
+    const streak = calculateStreak();
+    const streakEl = document.getElementById('header-streak');
+    if (streakEl) {
+        streakEl.textContent = `🔥 ${streak} dias`;
+    }
+}
 
 // Carregar treinos do Supabase
 async function loadWorkoutsFromSupabase() {
@@ -970,5 +1024,6 @@ renderExercises = function() {
     originalRenderExercises();
     renderCalendar();
     updateDashboard();
+    updateHeaderStreak();
 };
 

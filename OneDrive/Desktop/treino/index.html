@@ -11,15 +11,49 @@
     <script src="supabase-config.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
             <h1>💪 Meu Treino</h1>
-            <p class="subtitle">Acompanhe sua evolução e projete seu próximo treino</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="#rotina" class="nav-link active" onclick="showSection('rotina')">
+                <span class="nav-icon">📅</span> Rotina
+            </a></li>
+            <li><a href="#dashboard" class="nav-link" onclick="showSection('dashboard')">
+                <span class="nav-icon">📊</span> Dashboard
+            </a></li>
+            <li><a href="#adicionar" class="nav-link" onclick="showSection('adicionar')">
+                <span class="nav-icon">➕</span> Adicionar
+            </a></li>
+            <li><a href="#exercicios" class="nav-link" onclick="showSection('exercicios')">
+                <span class="nav-icon">💪</span> Exercícios
+            </a></li>
+            <li><a href="#calendario" class="nav-link" onclick="showSection('calendario')">
+                <span class="nav-icon">📆</span> Calendário
+            </a></li>
+            <li><a href="#evolucao" class="nav-link" onclick="showSection('evolucao')">
+                <span class="nav-icon">📈</span> Evolução
+            </a></li>
+        </ul>
+    </nav>
+
+    <div class="main-container">
+        <header class="top-header">
+            <div class="header-content">
+                <h2 id="page-title">Minha Rotina</h2>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <span class="streak-badge" id="header-streak">🔥 0 dias</span>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <main>
+        <main class="main-content">
             <!-- Seção de Rotina Semanal -->
-            <section class="card routine-section">
+            <section id="section-rotina" class="content-section active">
+            <div class="card routine-section">
                 <h2>📅 Minha Rotina de Treino Semanal</h2>
                 <p class="routine-subtitle">Clique em um dia para visualizar o treino completo</p>
                 <div class="routine-grid">
@@ -107,10 +141,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </section>
 
             <!-- Dashboard de Progresso (Estilo Hevy) -->
-            <section class="card dashboard-section">
+            <section id="section-dashboard" class="content-section">
+            <div class="card dashboard-section">
                 <h2>📊 Dashboard de Progresso</h2>
                 
                 <!-- Métricas Principais -->
@@ -212,10 +248,12 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </section>
 
             <!-- Seção de Adicionar Treino -->
-            <section class="card add-workout-section">
+            <section id="section-adicionar" class="content-section">
+            <div class="card add-workout-section">
                 <h2>Adicionar Exercício</h2>
                 <form id="workout-form">
                     <div class="form-group">
@@ -245,18 +283,22 @@
 
                     <button type="submit" class="btn-primary">Adicionar Exercício</button>
                 </form>
+            </div>
             </section>
 
             <!-- Seção de Exercícios -->
-            <section class="card exercises-section">
+            <section id="section-exercicios" class="content-section">
+            <div class="card exercises-section">
                 <h2>Meus Exercícios</h2>
                 <div id="exercises-list" class="exercises-list">
                     <!-- Exercícios serão inseridos aqui via JavaScript -->
                 </div>
+            </div>
             </section>
 
             <!-- Seção de Evolução -->
-            <section class="card evolution-section">
+            <section id="section-evolucao" class="content-section">
+            <div class="card evolution-section">
                 <h2>Evolução</h2>
                 <div class="evolution-controls">
                     <label for="exercise-select">Selecione o exercício:</label>
@@ -267,18 +309,22 @@
                 <div id="evolution-chart-container" class="chart-container">
                     <canvas id="evolution-chart"></canvas>
                 </div>
+            </div>
             </section>
 
             <!-- Seção de Projeção -->
-            <section class="card projection-section">
+            <section id="section-projecao" class="content-section">
+            <div class="card projection-section">
                 <h2>Projeção para Próximo Treino</h2>
                 <div id="projection-container">
                     <p class="info-text">Selecione um exercício para ver a projeção</p>
                 </div>
+            </div>
             </section>
 
             <!-- Seção de Calendário e Histórico -->
-            <section class="card calendar-section">
+            <section id="section-calendario" class="content-section">
+            <div class="card calendar-section">
                 <h2>📅 Calendário de Treinos</h2>
                 <p class="calendar-subtitle">Veja o histórico de pesos por data</p>
                 
@@ -294,6 +340,7 @@
                     <h3 id="day-details-title"></h3>
                     <div id="day-exercises"></div>
                 </div>
+            </div>
             </section>
         </main>
     </div>
