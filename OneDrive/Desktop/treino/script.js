@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Event listeners
     document.getElementById('workout-form').addEventListener('submit', handleAddWorkout);
     document.getElementById('exercise-select').addEventListener('change', handleExerciseSelect);
+    document.getElementById('dashboard-exercise-select').addEventListener('change', handleDashboardExerciseSelect);
     
     // Mostrar loading
     showLoading(true);
@@ -24,6 +25,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Destacar treino do dia atual
     highlightTodayWorkout();
     
+    // Inicializar calendário
+    renderCalendar();
+    
+    // Atualizar dashboard
+    updateDashboard();
+    updateExerciseSelect();
+    updateDashboardExerciseSelect();
+    
     // Esconder loading
     showLoading(false);
 });
@@ -31,39 +40,65 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Carregar treinos do Supabase
 async function loadWorkoutsFromSupabase() {
     try {
+        console.log('🔄 Carregando treinos do Supabase...');
+        
+        if (!supabase) {
+            throw new Error('Supabase não está configurado!');
+        }
+        
         const { data, error } = await supabase
             .from('workouts')
             .select('*')
             .order('workout_date', { ascending: false });
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Erro do Supabase:', error);
+            throw error;
+        }
         
         // Converter formato do banco para formato local
-        workouts = data.map(workout => ({
-            id: workout.id,
-            exerciseName: workout.exercise_name,
-            sets: workout.sets,
-            reps: workout.reps,
-            weight: workout.weight,
-            date: workout.workout_date,
-            timestamp: new Date(workout.workout_date).getTime()
-        }));
-        
-        // Salvar backup no localStorage
-        localStorage.setItem('workouts', JSON.stringify(workouts));
-        
-        isOnline = true;
-        console.log('✅ Dados carregados do Supabase:', workouts.length, 'treinos');
+        if (data && data.length > 0) {
+            workouts = data.map(workout => ({
+                id: workout.id,
+                exerciseName: workout.exercise_name,
+                sets: workout.sets,
+                reps: workout.reps,
+                weight: workout.weight,
+                date: workout.workout_date,
+                timestamp: new Date(workout.workout_date).getTime()
+            }));
+            
+            // Salvar backup no localStorage
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            
+            isOnline = true;
+            console.log('✅ Dados carregados do Supabase:', workouts.length, 'treinos');
+        } else {
+            // Nenhum dado ainda, mas conexão OK
+            workouts = [];
+            isOnline = true;
+            console.log('ℹ️ Nenhum treino no banco ainda. Pronto para receber dados!');
+        }
         
     } catch (error) {
         console.error('❌ Erro ao carregar do Supabase:', error);
+        
+        let errorMsg = '⚠️ Não foi possível conectar ao banco de dados. ';
+        if (error.message && error.message.includes('does not exist')) {
+            errorMsg += 'A tabela não existe! Execute criar-tabela.sql no Supabase primeiro.';
+        } else {
+            errorMsg += 'Usando dados locais.';
+        }
         
         // Tentar carregar do localStorage como fallback
         const localData = localStorage.getItem('workouts');
         if (localData) {
             workouts = JSON.parse(localData);
             isOnline = false;
-            showNotification('⚠️ Modo offline - usando dados locais', 'warning');
+            showNotification(errorMsg, 'warning');
+        } else {
+            workouts = [];
+            showNotification(errorMsg, 'warning');
         }
     }
 }
@@ -71,6 +106,13 @@ async function loadWorkoutsFromSupabase() {
 // Salvar treino no Supabase
 async function saveWorkoutToSupabase(workout) {
     try {
+        console.log('🔄 Tentando salvar no Supabase:', workout);
+        
+        // Verificar se Supabase está configurado
+        if (!supabase) {
+            throw new Error('Supabase não está configurado!');
+        }
+        
         const { data, error } = await supabase
             .from('workouts')
             .insert([{
@@ -82,17 +124,47 @@ async function saveWorkoutToSupabase(workout) {
             }])
             .select();
         
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Erro do Supabase:', error);
+            throw error;
+        }
+        
+        if (!data || data.length === 0) {
+            throw new Error('Nenhum dado retornado do Supabase');
+        }
         
         // Atualizar ID local com ID do banco
         workout.id = data[0].id;
         
         console.log('✅ Treino salvo no Supabase:', data[0]);
+        showNotification(`✅ Treino salvo! ID: ${data[0].id}`, 'success');
         return true;
         
     } catch (error) {
-        console.error('❌ Erro ao salvar no Supabase:', error);
-        showNotification('⚠️ Erro ao salvar online - salvo localmente', 'warning');
+        console.error('❌ Erro completo ao salvar no Supabase:', error);
+        
+        // Mensagem de erro mais detalhada
+        let errorMsg = '⚠️ Erro ao salvar no banco de dados. ';
+        
+        if (error.message) {
+            if (error.message.includes('does not exist')) {
+                errorMsg += 'A tabela "workouts" não existe! Execute o SQL criar-tabela.sql no Supabase primeiro.';
+            } else if (error.message.includes('permission denied')) {
+                errorMsg += 'Sem permissão! Verifique as políticas RLS no Supabase.';
+            } else {
+                errorMsg += error.message;
+            }
+        } else {
+            errorMsg += 'Verifique o console (F12) para mais detalhes.';
+        }
+        
+        showNotification(errorMsg, 'error');
+        
+        // Salvar localmente como backup
+        const localData = JSON.parse(localStorage.getItem('workouts') || '[]');
+        localData.push(workout);
+        localStorage.setItem('workouts', JSON.stringify(localData));
+        
         return false;
     }
 }
@@ -170,7 +242,30 @@ function highlightTodayWorkout() {
     }
 }
 
-// Visualizar PDF no modal
+// Visualizar PDF do Supabase no modal
+function viewRoutineFromSupabase(pdfFile, title) {
+    const modal = document.getElementById('pdf-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const pdfViewer = document.getElementById('pdf-viewer');
+    const pdfDownload = document.getElementById('pdf-download');
+    
+    // Obter URL pública do Supabase Storage
+    const { data } = supabase.storage
+        .from('workout-pdfs')
+        .getPublicUrl(pdfFile);
+    
+    const publicUrl = data.publicUrl;
+    
+    modalTitle.textContent = title;
+    pdfViewer.src = publicUrl;
+    pdfDownload.href = publicUrl;
+    pdfDownload.download = pdfFile;
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Fallback para PDFs locais (se ainda não fez upload)
 function viewRoutine(pdfFile, title) {
     const modal = document.getElementById('pdf-modal');
     const modalTitle = document.getElementById('modal-title');
@@ -221,6 +316,11 @@ async function handleAddWorkout(e) {
     const weight = parseFloat(document.getElementById('weight').value);
     const date = document.getElementById('workout-date').value;
     
+    if (!exerciseName || !sets || !reps || !weight || !date) {
+        showNotification('❌ Preencha todos os campos!', 'error');
+        return;
+    }
+    
     const workout = {
         id: Date.now(),
         exerciseName,
@@ -231,27 +331,32 @@ async function handleAddWorkout(e) {
         timestamp: new Date(date).getTime()
     };
     
-    // Salvar no Supabase
+    // Adicionar à lista local primeiro (para UI responsiva)
+    workouts.push(workout);
+    workouts.sort((a, b) => b.timestamp - a.timestamp);
+    renderExercises();
+    updateExerciseSelect();
+    
+    // Limpar formulário
+    document.getElementById('workout-form').reset();
+    document.getElementById('workout-date').valueAsDate = new Date();
+    
+    // Salvar no Supabase (em background)
     showLoading(true);
     const saved = await saveWorkoutToSupabase(workout);
     showLoading(false);
     
-    if (saved) {
-        workouts.push(workout);
-        workouts.sort((a, b) => b.timestamp - a.timestamp);
-        
-        // Backup local
+    // Se salvou no Supabase, atualizar ID; se não, manter local
+    if (!saved) {
+        // Se falhou, já está na lista mas precisamos atualizar localStorage
         localStorage.setItem('workouts', JSON.stringify(workouts));
-        
+        // Recarregar para garantir sincronia
+        await loadWorkoutsFromSupabase();
         renderExercises();
         updateExerciseSelect();
-        
-        // Limpar formulário
-        document.getElementById('workout-form').reset();
-        document.getElementById('workout-date').valueAsDate = new Date();
-        
-        // Mostrar feedback
-        showNotification('✅ Exercício adicionado com sucesso!', 'success');
+    } else {
+        // Backup local também
+        localStorage.setItem('workouts', JSON.stringify(workouts));
     }
 }
 
@@ -347,6 +452,14 @@ function updateExerciseSelect() {
     
     select.innerHTML = '<option value="">Selecione um exercício</option>' +
         uniqueExercises.map(ex => `<option value="${ex}">${ex}</option>`).join('');
+    
+    // Atualizar também o select do dashboard
+    if (typeof updateDashboardExerciseSelect === 'function') {
+        updateDashboardExerciseSelect();
+    }
+    
+    // Atualizar também o select do dashboard
+    updateDashboardExerciseSelect();
 }
 
 // Selecionar exercício para ver evolução
@@ -629,4 +742,233 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// ===========================================
+// CALENDÁRIO E FUNCIONALIDADES DE TREINO
+// ===========================================
+
+let currentCalendarDate = new Date();
+
+// Renderizar calendário
+function renderCalendar() {
+    const container = document.getElementById('calendar-container');
+    const monthYearEl = document.getElementById('current-month-year');
+    
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    
+    // Atualizar título
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    monthYearEl.textContent = `${monthNames[month]} ${year}`;
+    
+    // Primeiro dia do mês
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    // Dados de treinos do mês
+    const monthWorkouts = workouts.filter(w => {
+        const workoutDate = new Date(w.date);
+        return workoutDate.getFullYear() === year && workoutDate.getMonth() === month;
+    });
+    
+    // Agrupar por dia
+    const workoutsByDay = {};
+    monthWorkouts.forEach(w => {
+        const day = new Date(w.date).getDate();
+        if (!workoutsByDay[day]) {
+            workoutsByDay[day] = [];
+        }
+        workoutsByDay[day].push(w);
+    });
+    
+    // Limpar container
+    container.innerHTML = '';
+    
+    // Cabeçalho dos dias da semana
+    const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    weekDays.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-day-header';
+        dayHeader.style.gridColumn = 'span 1';
+        dayHeader.textContent = day;
+        container.appendChild(dayHeader);
+    });
+    
+    // Espaços vazios antes do primeiro dia
+    for (let i = 0; i < startingDayOfWeek; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'calendar-day';
+        emptyDay.style.visibility = 'hidden';
+        container.appendChild(emptyDay);
+    }
+    
+    // Dias do mês
+    const today = new Date();
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'calendar-day';
+        
+        const dayDate = new Date(year, month, day);
+        const isToday = dayDate.toDateString() === today.toDateString();
+        const hasWorkout = workoutsByDay[day];
+        
+        if (isToday) dayEl.classList.add('today');
+        if (hasWorkout) dayEl.classList.add('has-workout');
+        
+        dayEl.innerHTML = `
+            <div class="calendar-day-number">${day}</div>
+            ${hasWorkout ? `
+                <div class="calendar-day-exercises">${hasWorkout.length} exercício${hasWorkout.length > 1 ? 's' : ''}</div>
+                <div class="calendar-day-weight">${Math.max(...hasWorkout.map(w => w.weight))}kg</div>
+            ` : ''}
+        `;
+        
+        if (hasWorkout) {
+            dayEl.onclick = () => showDayDetails(year, month, day, workoutsByDay[day]);
+        }
+        
+        container.appendChild(dayEl);
+    }
+}
+
+// Mostrar detalhes do dia
+function showDayDetails(year, month, day, dayWorkouts) {
+    const detailsEl = document.getElementById('day-details');
+    const titleEl = document.getElementById('day-details-title');
+    const exercisesEl = document.getElementById('day-exercises');
+    
+    const date = new Date(year, month, day);
+    titleEl.textContent = `Treinos de ${formatDate(date.toISOString().split('T')[0])}`;
+    
+    exercisesEl.innerHTML = dayWorkouts.map(w => `
+        <div class="day-exercise-item">
+            <div class="day-exercise-name">${w.exerciseName}</div>
+            <div class="day-exercise-details">
+                <div class="day-exercise-detail">
+                    <div class="day-exercise-detail-label">Séries</div>
+                    <div class="day-exercise-detail-value">${w.sets}</div>
+                </div>
+                <div class="day-exercise-detail">
+                    <div class="day-exercise-detail-label">Repetições</div>
+                    <div class="day-exercise-detail-value">${w.reps}</div>
+                </div>
+                <div class="day-exercise-detail">
+                    <div class="day-exercise-detail-label">Carga</div>
+                    <div class="day-exercise-detail-value">${w.weight} kg</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    detailsEl.style.display = 'block';
+    detailsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Mudar mês do calendário
+function changeMonth(direction) {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + direction);
+    renderCalendar();
+}
+
+// Buscar peso anterior de um exercício
+function getPreviousWeight(exerciseName) {
+    const exerciseWorkouts = workouts
+        .filter(w => w.exerciseName.toLowerCase() === exerciseName.toLowerCase())
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (exerciseWorkouts.length > 0) {
+        const lastWorkout = exerciseWorkouts[0];
+        const lastDate = formatDate(lastWorkout.date);
+        return {
+            weight: lastWorkout.weight,
+            sets: lastWorkout.sets,
+            reps: lastWorkout.reps,
+            date: lastDate
+        };
+    }
+    return null;
+}
+
+// Iniciar treino (mostra peso anterior)
+function startWorkout(day, dayName) {
+    // Scroll para o formulário
+    document.querySelector('.add-workout-section').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+    });
+    
+    // Mostrar notificação com o treino do dia
+    showNotification(`💪 ${dayName} - Preencha seus exercícios abaixo`, 'info');
+    
+    // Definir data de hoje se for o dia atual
+    const daysOfWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+    const todayIndex = new Date().getDay();
+    const todayName = daysOfWeek[todayIndex];
+    
+    if (day.toLowerCase() === todayName) {
+        document.getElementById('workout-date').valueAsDate = new Date();
+    }
+    
+    // Adicionar listener para mostrar peso anterior ao digitar exercício
+    const exerciseInput = document.getElementById('exercise-name');
+    const existingListener = exerciseInput.dataset.hasListener;
+    
+    if (!existingListener) {
+        exerciseInput.addEventListener('blur', function() {
+            const exerciseName = this.value.trim();
+            if (exerciseName) {
+                const previous = getPreviousWeight(exerciseName);
+                if (previous) {
+                    showPreviousWeightHint(exerciseName, previous);
+                } else {
+                    removePreviousWeightHint();
+                }
+            }
+        });
+        exerciseInput.dataset.hasListener = 'true';
+    }
+}
+
+// Mostrar dica de peso anterior
+function showPreviousWeightHint(exerciseName, previous) {
+    removePreviousWeightHint();
+    
+    const formGroup = document.getElementById('exercise-name').parentElement;
+    const hint = document.createElement('div');
+    hint.className = 'previous-weight-hint';
+    hint.id = 'previous-weight-hint';
+    hint.innerHTML = `
+        <strong>📊 Último treino de ${exerciseName}:</strong><br>
+        ${previous.date} - ${previous.sets}x${previous.reps} com ${previous.weight}kg
+    `;
+    formGroup.appendChild(hint);
+    
+    // Preencher automaticamente se quiser
+    const weightInput = document.getElementById('weight');
+    if (!weightInput.value) {
+        weightInput.value = previous.weight;
+        weightInput.style.borderColor = '#10b981';
+        setTimeout(() => {
+            weightInput.style.borderColor = '';
+        }, 2000);
+    }
+}
+
+// Remover dica de peso anterior
+function removePreviousWeightHint() {
+    const hint = document.getElementById('previous-weight-hint');
+    if (hint) hint.remove();
+}
+
+// Atualizar calendário quando workouts mudarem
+// Sobrescrever renderExercises para atualizar calendário também
+const originalRenderExercises = renderExercises;
+renderExercises = function() {
+    originalRenderExercises();
+    renderCalendar();
+    updateDashboard();
+};
 

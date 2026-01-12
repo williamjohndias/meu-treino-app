@@ -27,54 +27,189 @@
                         <div class="routine-icon">🔥</div>
                         <div class="routine-day-name">Segunda</div>
                         <div class="routine-focus">Deltoides</div>
-                        <button class="btn-view-routine" onclick="viewRoutine('segunda deltoides.pdf', 'Segunda - Deltoides')">
-                            Ver Treino
-                        </button>
+                        <div class="routine-buttons">
+                            <button class="btn-view-routine" onclick="viewRoutineFromSupabase('segunda deltoides.pdf', 'Segunda - Deltoides')">
+                                Ver PDF
+                            </button>
+                            <button class="btn-start-workout" onclick="startWorkout('segunda', 'Segunda - Deltoides')">
+                                ▶️ Iniciar Treino
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="routine-day" data-day="terca">
                         <div class="routine-icon">💪</div>
                         <div class="routine-day-name">Terça</div>
                         <div class="routine-focus">Bíceps e Tríceps</div>
-                        <button class="btn-view-routine" onclick="viewRoutine('terça biceps e triceps.pdf', 'Terça - Bíceps e Tríceps')">
-                            Ver Treino
-                        </button>
+                        <div class="routine-buttons">
+                            <button class="btn-view-routine" onclick="viewRoutineFromSupabase('terça biceps e triceps.pdf', 'Terça - Bíceps e Tríceps')">
+                                Ver PDF
+                            </button>
+                            <button class="btn-start-workout" onclick="startWorkout('terça', 'Terça - Bíceps e Tríceps')">
+                                ▶️ Iniciar Treino
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="routine-day" data-day="quarta">
                         <div class="routine-icon">🍑</div>
                         <div class="routine-day-name">Quarta</div>
                         <div class="routine-focus">Posterior e Glúteo</div>
-                        <button class="btn-view-routine" onclick="viewRoutine('quarta posterior e glueto.pdf', 'Quarta - Posterior e Glúteo')">
-                            Ver Treino
-                        </button>
+                        <div class="routine-buttons">
+                            <button class="btn-view-routine" onclick="viewRoutineFromSupabase('quarta posterior e glueto.pdf', 'Quarta - Posterior e Glúteo')">
+                                Ver PDF
+                            </button>
+                            <button class="btn-start-workout" onclick="startWorkout('quarta', 'Quarta - Posterior e Glúteo')">
+                                ▶️ Iniciar Treino
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="routine-day" data-day="quinta">
                         <div class="routine-icon">💯</div>
                         <div class="routine-day-name">Quinta</div>
                         <div class="routine-focus">Peito e Tríceps</div>
-                        <button class="btn-view-routine" onclick="viewRoutine('quinta peito e tríceps.pdf', 'Quinta - Peito e Tríceps')">
-                            Ver Treino
-                        </button>
+                        <div class="routine-buttons">
+                            <button class="btn-view-routine" onclick="viewRoutineFromSupabase('quinta peito e tríceps.pdf', 'Quinta - Peito e Tríceps')">
+                                Ver PDF
+                            </button>
+                            <button class="btn-start-workout" onclick="startWorkout('quinta', 'Quinta - Peito e Tríceps')">
+                                ▶️ Iniciar Treino
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="routine-day" data-day="sexta">
                         <div class="routine-icon">💪</div>
                         <div class="routine-day-name">Sexta</div>
                         <div class="routine-focus">Dorsal</div>
-                        <button class="btn-view-routine" onclick="viewRoutine('sexta dorsal.pdf', 'Sexta - Dorsal')">
-                            Ver Treino
-                        </button>
+                        <div class="routine-buttons">
+                            <button class="btn-view-routine" onclick="viewRoutineFromSupabase('sexta dorsal.pdf', 'Sexta - Dorsal')">
+                                Ver PDF
+                            </button>
+                            <button class="btn-start-workout" onclick="startWorkout('sexta', 'Sexta - Dorsal')">
+                                ▶️ Iniciar Treino
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="routine-day" data-day="sabado">
                         <div class="routine-icon">🦵</div>
                         <div class="routine-day-name">Sábado</div>
                         <div class="routine-focus">Quadríceps</div>
-                        <button class="btn-view-routine" onclick="viewRoutine('sábado quadriceps.pdf', 'Sábado - Quadríceps')">
-                            Ver Treino
-                        </button>
+                        <div class="routine-buttons">
+                            <button class="btn-view-routine" onclick="viewRoutineFromSupabase('sábado quadriceps.pdf', 'Sábado - Quadríceps')">
+                                Ver PDF
+                            </button>
+                            <button class="btn-start-workout" onclick="startWorkout('sábado', 'Sábado - Quadríceps')">
+                                ▶️ Iniciar Treino
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard de Progresso (Estilo Hevy) -->
+            <section class="card dashboard-section">
+                <h2>📊 Dashboard de Progresso</h2>
+                
+                <!-- Métricas Principais -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">💪</div>
+                        <div class="metric-value" id="total-workouts">0</div>
+                        <div class="metric-label">Treinos Totais</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🏋️</div>
+                        <div class="metric-value" id="total-exercises">0</div>
+                        <div class="metric-label">Exercícios Únicos</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">📈</div>
+                        <div class="metric-value" id="total-volume">0</div>
+                        <div class="metric-label">Volume Total (kg)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🔥</div>
+                        <div class="metric-value" id="streak-days">0</div>
+                        <div class="metric-label">Dias Consecutivos</div>
+                    </div>
+                </div>
+
+                <!-- Seleção de Exercício para Análise -->
+                <div class="dashboard-controls">
+                    <label for="dashboard-exercise-select">Analisar Exercício:</label>
+                    <select id="dashboard-exercise-select">
+                        <option value="">Selecione um exercício</option>
+                    </select>
+                </div>
+
+                <!-- Cards de Análise -->
+                <div id="dashboard-analysis" class="dashboard-analysis" style="display: none;">
+                    <!-- 1RM Atual e Projeção -->
+                    <div class="analysis-row">
+                        <div class="analysis-card rm-card">
+                            <div class="analysis-header">
+                                <span class="analysis-icon">⚡</span>
+                                <h3>1RM Estimado</h3>
+                            </div>
+                            <div class="rm-display">
+                                <div class="rm-current">
+                                    <div class="rm-label">Atual</div>
+                                    <div class="rm-value" id="current-1rm">0 kg</div>
+                                </div>
+                                <div class="rm-projection">
+                                    <div class="rm-label">Próximo Treino</div>
+                                    <div class="rm-value" id="projected-1rm">0 kg</div>
+                                    <div class="rm-change" id="rm-change">+0 kg</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="analysis-card stats-card">
+                            <div class="analysis-header">
+                                <span class="analysis-icon">📊</span>
+                                <h3>Estatísticas</h3>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div class="stat-label">Carga Máxima</div>
+                                    <div class="stat-value" id="max-weight">0 kg</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Volume Máximo</div>
+                                    <div class="stat-value" id="max-volume">0 kg</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Melhoria Total</div>
+                                    <div class="stat-value" id="total-improvement">+0 kg</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Treinos Realizados</div>
+                                    <div class="stat-value" id="exercise-workouts">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráficos Avançados -->
+                    <div class="charts-row">
+                        <div class="chart-card">
+                            <h3>Evolução de Carga e Volume</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="advanced-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-row">
+                        <div class="chart-card">
+                            <h3>Evolução do 1RM Estimado</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="rm-chart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -139,6 +274,25 @@
                 <h2>Projeção para Próximo Treino</h2>
                 <div id="projection-container">
                     <p class="info-text">Selecione um exercício para ver a projeção</p>
+                </div>
+            </section>
+
+            <!-- Seção de Calendário e Histórico -->
+            <section class="card calendar-section">
+                <h2>📅 Calendário de Treinos</h2>
+                <p class="calendar-subtitle">Veja o histórico de pesos por data</p>
+                
+                <div class="calendar-controls">
+                    <button onclick="changeMonth(-1)" class="btn-month">← Mês Anterior</button>
+                    <h3 id="current-month-year"></h3>
+                    <button onclick="changeMonth(1)" class="btn-month">Próximo Mês →</button>
+                </div>
+                
+                <div id="calendar-container" class="calendar-container"></div>
+                
+                <div id="day-details" class="day-details" style="display: none;">
+                    <h3 id="day-details-title"></h3>
+                    <div id="day-exercises"></div>
                 </div>
             </section>
         </main>

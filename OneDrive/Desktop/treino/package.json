@@ -1,0 +1,12 @@
+{
+  "name": "meu-treino-app",
+  "version": "1.0.0",
+  "description": "Aplicação de acompanhamento de treino com Supabase",
+  "scripts": {
+    "build": "echo 'No build needed'"
+  },
+  "keywords": ["treino", "fitness", "workout"],
+  "author": "",
+  "license": "MIT"
+}
+
