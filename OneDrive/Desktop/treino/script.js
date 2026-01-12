@@ -2,6 +2,54 @@
 let workouts = [];
 let isOnline = true;
 
+// Estrutura de exercícios por dia (baseado nos PDFs)
+const workoutRoutines = {
+    'segunda': [
+        { name: 'Desenvolvimento com Halteres', sets: 4, reps: 10 },
+        { name: 'Elevação Lateral', sets: 3, reps: 12 },
+        { name: 'Elevação Frontal', sets: 3, reps: 12 },
+        { name: 'Crucifixo Invertido', sets: 3, reps: 12 },
+        { name: 'Remada Alta', sets: 3, reps: 12 }
+    ],
+    'terça': [
+        { name: 'Rosca Direta com Barra', sets: 4, reps: 10 },
+        { name: 'Rosca Alternada', sets: 3, reps: 12 },
+        { name: 'Rosca Martelo', sets: 3, reps: 12 },
+        { name: 'Tríceps Pulley', sets: 4, reps: 10 },
+        { name: 'Tríceps Francês', sets: 3, reps: 12 },
+        { name: 'Tríceps Testa', sets: 3, reps: 12 }
+    ],
+    'quarta': [
+        { name: 'Stiff', sets: 4, reps: 10 },
+        { name: 'Levantamento Terra', sets: 3, reps: 8 },
+        { name: 'Flexão de Pernas', sets: 4, reps: 12 },
+        { name: 'Elevação Pélvica', sets: 3, reps: 15 },
+        { name: 'Abdução de Quadril', sets: 3, reps: 15 }
+    ],
+    'quinta': [
+        { name: 'Supino Reto', sets: 4, reps: 10 },
+        { name: 'Supino Inclinado', sets: 3, reps: 12 },
+        { name: 'Crucifixo', sets: 3, reps: 12 },
+        { name: 'Tríceps Pulley', sets: 4, reps: 10 },
+        { name: 'Tríceps Francês', sets: 3, reps: 12 },
+        { name: 'Paralelas', sets: 3, reps: 12 }
+    ],
+    'sexta': [
+        { name: 'Barra Fixa', sets: 4, reps: 10 },
+        { name: 'Puxada Frontal', sets: 4, reps: 10 },
+        { name: 'Remada Curvada', sets: 4, reps: 10 },
+        { name: 'Remada Unilateral', sets: 3, reps: 12 },
+        { name: 'Puxada Alta', sets: 3, reps: 12 }
+    ],
+    'sábado': [
+        { name: 'Agachamento Livre', sets: 4, reps: 10 },
+        { name: 'Leg Press', sets: 4, reps: 12 },
+        { name: 'Extensão de Pernas', sets: 3, reps: 15 },
+        { name: 'Afundo', sets: 3, reps: 12 },
+        { name: 'Cadeira Extensora', sets: 3, reps: 15 }
+    ]
+};
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
     // Definir data padrão como hoje
@@ -96,8 +144,20 @@ async function loadWorkoutsFromSupabase() {
     try {
         console.log('🔄 Carregando treinos do Supabase...');
         
+        // Verificar se Supabase está inicializado
         if (!supabase) {
-            throw new Error('Supabase não está configurado!');
+            // Tentar inicializar novamente
+            if (typeof window.supabase !== 'undefined') {
+                const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
+                const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } else if (typeof Supabase !== 'undefined') {
+                const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
+                const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
+                supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } else {
+                throw new Error('Supabase não está configurado! Verifique se o script do Supabase foi carregado.');
+            }
         }
         
         const { data, error } = await supabase
@@ -946,63 +1006,152 @@ function getPreviousWeight(exerciseName) {
     return null;
 }
 
-// Iniciar treino (mostra peso anterior)
+// Iniciar treino (mostra exercícios do dia)
 function startWorkout(day, dayName) {
     try {
-        // Primeiro, mostrar a seção de adicionar
-        showSection('adicionar');
+        // Obter exercícios do dia
+        const dayKey = day.toLowerCase();
+        const exercises = workoutRoutines[dayKey] || [];
         
-        // Aguardar um pouco para a seção aparecer antes de fazer scroll
-        setTimeout(() => {
-            // Scroll para o formulário
-            const addSection = document.querySelector('.add-workout-section');
-            if (addSection) {
-                addSection.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
-            }
-        }, 100);
+        if (exercises.length === 0) {
+            showNotification('Nenhum exercício encontrado para este dia.', 'warning');
+            return;
+        }
         
-        // Mostrar notificação com o treino do dia
-        showNotification(`💪 ${dayName} - Preencha seus exercícios abaixo`, 'info');
+        // Mostrar seção de sessão de treino
+        showSection('workout-session');
         
-        // Definir data de hoje se for o dia atual
+        // Atualizar título
+        const titleEl = document.getElementById('workout-session-title');
+        if (titleEl) {
+            titleEl.textContent = `💪 ${dayName}`;
+        }
+        
+        // Definir data
         const daysOfWeek = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
         const todayIndex = new Date().getDay();
         const todayName = daysOfWeek[todayIndex];
+        const workoutDate = day.toLowerCase() === todayName ? new Date() : new Date();
         
-        if (day.toLowerCase() === todayName) {
-            const dateInput = document.getElementById('workout-date');
-            if (dateInput) {
-                dateInput.valueAsDate = new Date();
-            }
+        const dateEl = document.getElementById('workout-session-date');
+        if (dateEl) {
+            dateEl.textContent = `Data: ${formatDate(workoutDate.toISOString().split('T')[0])}`;
         }
         
-        // Adicionar listener para mostrar peso anterior ao digitar exercício
-        const exerciseInput = document.getElementById('exercise-name');
-        if (exerciseInput) {
-            const existingListener = exerciseInput.dataset.hasListener;
-            
-            if (!existingListener) {
-                exerciseInput.addEventListener('blur', function() {
-                    const exerciseName = this.value.trim();
-                    if (exerciseName) {
-                        const previous = getPreviousWeight(exerciseName);
-                        if (previous) {
-                            showPreviousWeightHint(exerciseName, previous);
-                        } else {
-                            removePreviousWeightHint();
-                        }
-                    }
-                });
-                exerciseInput.dataset.hasListener = 'true';
-            }
-        }
+        // Renderizar exercícios
+        renderWorkoutExercises(exercises, workoutDate);
+        
+        // Scroll para o topo
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
     } catch (error) {
         console.error('Erro ao iniciar treino:', error);
         showNotification('Erro ao iniciar treino. Tente novamente.', 'error');
     }
+}
+
+// Renderizar lista de exercícios da sessão de treino
+function renderWorkoutExercises(exercises, workoutDate) {
+    const container = document.getElementById('workout-exercises-list');
+    if (!container) return;
+    
+    const dateStr = workoutDate.toISOString().split('T')[0];
+    
+    container.innerHTML = exercises.map((exercise, index) => {
+        // Buscar peso anterior
+        const previous = getPreviousWeight(exercise.name);
+        const previousHint = previous ? `<div class="previous-hint">📊 Último: ${previous.weight}kg (${previous.reps} reps)</div>` : '';
+        
+        return `
+            <div class="workout-exercise-card" data-exercise="${exercise.name}">
+                <div class="workout-exercise-header">
+                    <div class="workout-exercise-number">${index + 1}</div>
+                    <div class="workout-exercise-info">
+                        <h3>${exercise.name}</h3>
+                        <div class="workout-exercise-preset">
+                            ${exercise.sets} séries × ${exercise.reps} reps
+                        </div>
+                        ${previousHint}
+                    </div>
+                </div>
+                <div class="workout-exercise-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Séries</label>
+                            <input type="number" class="exercise-sets" value="${exercise.sets}" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Repetições</label>
+                            <input type="number" class="exercise-reps" value="${exercise.reps}" min="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Carga (kg)</label>
+                            <input type="number" class="exercise-weight" value="${previous ? previous.weight : ''}" min="0" step="0.5" placeholder="0" required>
+                        </div>
+                    </div>
+                    <button class="btn-primary btn-add-exercise" onclick="addExerciseFromSession('${exercise.name}', '${dateStr}', ${index})">
+                        ✅ Adicionar
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Adicionar exercício da sessão de treino
+async function addExerciseFromSession(exerciseName, dateStr, index) {
+    try {
+        const card = document.querySelectorAll('.workout-exercise-card')[index];
+        if (!card) return;
+        
+        const sets = parseInt(card.querySelector('.exercise-sets').value) || 3;
+        const reps = parseInt(card.querySelector('.exercise-reps').value) || 10;
+        const weight = parseFloat(card.querySelector('.exercise-weight').value) || 0;
+        
+        if (weight <= 0) {
+            showNotification('Por favor, informe a carga utilizada.', 'warning');
+            return;
+        }
+        
+        const workout = {
+            exerciseName: exerciseName,
+            sets: sets,
+            reps: reps,
+            weight: weight,
+            date: dateStr,
+            timestamp: new Date(dateStr).getTime()
+        };
+        
+        // Adicionar ao array
+        workouts.push(workout);
+        
+        // Salvar no Supabase
+        await saveWorkoutToSupabase(workout);
+        
+        // Marcar como adicionado
+        card.classList.add('completed');
+        const btn = card.querySelector('.btn-add-exercise');
+        btn.textContent = '✅ Adicionado';
+        btn.disabled = true;
+        btn.classList.add('disabled');
+        
+        // Atualizar interface
+        renderExercises();
+        updateExerciseSelect();
+        updateDashboard();
+        updateHeaderStreak();
+        
+        showNotification(`✅ ${exerciseName} adicionado!`, 'success');
+        
+    } catch (error) {
+        console.error('Erro ao adicionar exercício:', error);
+        showNotification('Erro ao adicionar exercício. Tente novamente.', 'error');
+    }
+}
+
+// Fechar sessão de treino
+function closeWorkoutSession() {
+    showSection('rotina');
 }
 
 // Mostrar dica de peso anterior

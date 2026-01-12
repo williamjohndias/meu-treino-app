@@ -8,6 +8,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Expor Supabase globalmente após carregar
+        window.addEventListener('load', () => {
+            if (typeof supabase !== 'undefined') {
+                window.supabaseLib = supabase;
+            }
+        });
+    </script>
     <script src="supabase-config.js"></script>
 </head>
 <body>
@@ -247,6 +255,22 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+            </section>
+
+            <!-- Seção de Sessão de Treino -->
+            <section id="section-workout-session" class="content-section">
+            <div class="card workout-session-section">
+                <div class="workout-session-header">
+                    <h2 id="workout-session-title">💪 Iniciando Treino</h2>
+                    <button class="btn-secondary" onclick="closeWorkoutSession()">✕ Fechar</button>
+                </div>
+                <div class="workout-session-info">
+                    <p id="workout-session-date"></p>
+                </div>
+                <div id="workout-exercises-list" class="workout-exercises-list">
+                    <!-- Exercícios serão inseridos aqui -->
                 </div>
             </div>
             </section>
