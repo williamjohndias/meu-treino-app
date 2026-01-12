@@ -188,19 +188,19 @@ async function loadWorkoutsFromSupabase() {
     try {
         console.log('🔄 Carregando treinos do Supabase...');
         
-        // Verificar se Supabase está inicializado
+        // Verificar e tentar inicializar Supabase se necessário
         if (!supabase) {
-            // Tentar inicializar novamente
-            if (typeof window.supabase !== 'undefined') {
-                const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
-                const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
+            const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
+            
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase inicializado durante carregamento');
+            } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            } else if (typeof Supabase !== 'undefined') {
-                const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
-                const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
-                supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase inicializado via window.supabase');
             } else {
-                throw new Error('Supabase não está configurado! Verifique se o script do Supabase foi carregado.');
+                throw new Error('Supabase não está disponível! Verifique se o script foi carregado e recarregue a página.');
             }
         }
         
