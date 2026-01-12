@@ -2,41 +2,47 @@
 const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
 
-// Inicializar cliente Supabase
-// O Supabase é carregado via CDN e fica disponível globalmente
+// Variável global para o cliente Supabase
 let supabase = null;
 
-// Função para inicializar o Supabase
+// Função para inicializar o Supabase (chamada após o script carregar)
 function initSupabase() {
     try {
-        // Verificar se o Supabase está disponível
-        if (typeof supabaseLib !== 'undefined') {
-            supabase = supabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase conectado via supabaseLib');
+        // O Supabase via CDN expõe o objeto 'supabase' globalmente
+        if (typeof supabase !== 'undefined' && supabase.createClient) {
+            supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase conectado! URL:', SUPABASE_URL);
+            return true;
         } else if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase conectado via window.supabase');
+            console.log('✅ Supabase conectado via window.supabase!');
+            return true;
         } else {
-            // Tentar acessar diretamente do objeto global
-            const SupabaseClient = window.supabase || (window.Supabase && window.Supabase.createClient);
-            if (SupabaseClient && typeof SupabaseClient.createClient === 'function') {
-                supabase = SupabaseClient.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('✅ Supabase conectado via Supabase.createClient');
-            } else {
-                console.error('❌ Supabase não está disponível! Verifique se o script foi carregado.');
-            }
+            console.warn('⚠️ Supabase ainda não carregou, tentando novamente...');
+            return false;
         }
     } catch (error) {
         console.error('❌ Erro ao inicializar Supabase:', error);
+        return false;
     }
 }
 
-// Aguardar o DOM e o Supabase carregarem
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initSupabase, 200);
-    });
+// Tentar inicializar imediatamente (se o script já carregou)
+if (typeof supabase !== 'undefined') {
+    initSupabase();
 } else {
-    setTimeout(initSupabase, 200);
+    // Aguardar o script do Supabase carregar
+    let attempts = 0;
+    const maxAttempts = 50; // 5 segundos
+    
+    const checkSupabase = setInterval(() => {
+        attempts++;
+        if (initSupabase() || attempts >= maxAttempts) {
+            clearInterval(checkSupabase);
+            if (!supabase && attempts >= maxAttempts) {
+                console.error('❌ Não foi possível conectar ao Supabase após várias tentativas');
+            }
+        }
+    }, 100);
 }
 

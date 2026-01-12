@@ -52,15 +52,33 @@ const workoutRoutines = {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
-    // Aguardar Supabase inicializar (máximo 2 segundos)
+    // Aguardar Supabase inicializar (máximo 5 segundos)
     let attempts = 0;
-    while (!supabase && attempts < 20) {
+    const maxAttempts = 50;
+    
+    while (!supabase && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 100));
         attempts++;
+        
+        // Tentar inicializar novamente a cada tentativa
+        if (!supabase && typeof supabase !== 'undefined' && supabase.createClient) {
+            const SUPABASE_URL = 'https://nkbwiyvrblvylwibaxoy.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_TQhWvoQrxpgnzStwGhMkBw_VtJyY2-r';
+            try {
+                supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase inicializado durante o carregamento!');
+                break;
+            } catch (e) {
+                console.warn('Tentativa de inicialização falhou:', e);
+            }
+        }
     }
     
     if (!supabase) {
-        console.warn('⚠️ Supabase não inicializado, usando modo offline');
+        console.warn('⚠️ Supabase não inicializado após', maxAttempts * 100, 'ms. Usando modo offline.');
+        console.warn('Verifique se o script do Supabase foi carregado corretamente.');
+    } else {
+        console.log('✅ Supabase pronto para uso!');
     }
     
     // Definir data padrão como hoje
