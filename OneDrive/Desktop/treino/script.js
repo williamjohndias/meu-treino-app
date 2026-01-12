@@ -52,13 +52,38 @@ const workoutRoutines = {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
+    // Aguardar Supabase inicializar (máximo 2 segundos)
+    let attempts = 0;
+    while (!supabase && attempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+    }
+    
+    if (!supabase) {
+        console.warn('⚠️ Supabase não inicializado, usando modo offline');
+    }
+    
     // Definir data padrão como hoje
-    document.getElementById('workout-date').valueAsDate = new Date();
+    const dateInput = document.getElementById('workout-date');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
     
     // Event listeners
-    document.getElementById('workout-form').addEventListener('submit', handleAddWorkout);
-    document.getElementById('exercise-select').addEventListener('change', handleExerciseSelect);
-    document.getElementById('dashboard-exercise-select').addEventListener('change', handleDashboardExerciseSelect);
+    const workoutForm = document.getElementById('workout-form');
+    if (workoutForm) {
+        workoutForm.addEventListener('submit', handleAddWorkout);
+    }
+    
+    const exerciseSelect = document.getElementById('exercise-select');
+    if (exerciseSelect) {
+        exerciseSelect.addEventListener('change', handleExerciseSelect);
+    }
+    
+    const dashboardSelect = document.getElementById('dashboard-exercise-select');
+    if (dashboardSelect) {
+        dashboardSelect.addEventListener('change', handleDashboardExerciseSelect);
+    }
     
     // Mostrar loading
     showLoading(true);
