@@ -143,7 +143,8 @@ function showSection(sectionId) {
         'adicionar': 'Adicionar Exercício',
         'exercicios': 'Meus Exercícios',
         'calendario': 'Calendário',
-        'evolucao': 'Evolução'
+        'evolucao': 'Evolução',
+        'workout-session': 'Sessão de Treino'
     };
     
     const titleEl = document.getElementById('page-title');
